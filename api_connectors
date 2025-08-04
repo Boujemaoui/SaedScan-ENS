@@ -1,0 +1,44 @@
+# api_connectors/etherscan.py
+import os
+import requests
+from typing import Dict, List, Optional
+
+class EtherscanConnector:
+    BASE_URL = "https://api.etherscan.io/api"
+
+    def __init__(self, api_key: str = os.getenv('ETHERSCAN_API_KEY')):
+        self.api_key = api_key
+
+    def get_transactions(self, address: str, limit: int = 100) -> List[Dict]:
+        """Get normal transactions for address"""
+        params = {
+            'module': 'account',
+            'action': 'txlist',
+            'address': address,
+            'sort': 'desc',
+            'apikey': self.api_key
+        }
+        response = requests.get(self.BASE_URL, params=params)
+        return response.json().get('result', [])[:limit]
+
+    def get_internal_txs(self, address: str) -> List[Dict]:
+        """Get internal transactions (token transfers, etc.)"""
+        params = {
+            'module': 'account',
+            'action': 'txlistinternal',
+            'address': address,
+            'apikey': self.api_key
+        }
+        response = requests.get(self.BASE_URL, params=params)
+        return response.json().get('result', [])
+
+    def get_abi(self, contract_address: str) -> Optional[Dict]:
+        """Fetch contract ABI"""
+        params = {
+            'module': 'contract',
+            'action': 'getabi',
+            'address': contract_address,
+            'apikey': self.api_key
+        }
+        response = requests.get(self.BASE_URL, params=params)
+        return response.json().get('result')
